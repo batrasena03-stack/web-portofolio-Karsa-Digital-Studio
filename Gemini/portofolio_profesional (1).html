@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karsa Digital Studio - Cyberpunk Edition</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            black: '#0a0a0f',
+                            dark: '#12121a',
+                            panel: '#1a1a24',
+                            magenta: '#ff0055',
+                            purple: '#7928ca',
+                            cyan: '#00f2fe',
+                            orange: '#ff6b00'
+                        }
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #0a0a0f;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Slide-out animation from left to right and stay in position */
+        @keyframes slideOutRight {
+            0% {
+                opacity: 0;
+                transform: translateX(-120px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .animate-slide-right {
+            animation: slideOutRight 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .delay-1 { animation-delay: 0.2s; }
+        .delay-2 { animation-delay: 0.4s; }
+        .delay-3 { animation-delay: 0.6s; }
+
+        /* Scanning overlay lines */
+        .scanline {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 242, 254, 0.12) 50%,
+                rgba(0, 242, 254, 0.12)
+            );
+            background-size: 100% 4px;
+        }
+
+        /* Neon Glow Utility Effects */
+        .neon-border-magenta {
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.4), inset 0 0 15px rgba(255, 0, 85, 0.2);
+        }
+        .neon-border-cyan {
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4), inset 0 0 15px rgba(0, 242, 254, 0.2);
+        }
+        .text-glow-cyan {
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.7);
+        }
+        .text-glow-magenta {
+            text-shadow: 0 0 10px rgba(255, 0, 85, 0.7);
+        }
+
+        /* Fade-out transition for smooth entrance */
+        .fade-out {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.6s ease-out, visibility 0.6s ease-out;
+        }
+
+        /* City Background Gradient Layer */
+        .city-bg {
+            background: linear-gradient(180deg, rgba(10, 10, 15, 0.5) 0%, rgba(10, 10, 15, 0.95) 85%, #0a0a0f 100%);
+        }
+
+        /* Radar scan effect */
+        @keyframes radarScan {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .animate-radar {
+            animation: radarScan 6s linear infinite;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen">
+
+    <div id="loader-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-cyber-black scanline p-4">
+        <div class="max-w-md w-full bg-cyber-dark/90 p-6 sm:p-8 rounded-2xl border border-cyber-cyan/30 neon-border-cyan backdrop-blur-md text-center">
+            
+            <p class="text-xs text-cyber-cyan font-orbitron tracking-widest mb-2">// INITIALIZING K-SYSTEM</p>
+            
+            <!-- Clean Header Title Without Text Overlap -->
+            <div class="py-2">
+                <h1 class="text-2xl sm:text-3xl font-black font-orbitron tracking-wider text-white uppercase leading-tight">
+                    KARSA DIGITAL <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyber-magenta to-cyber-cyan text-glow-magenta block sm:inline mt-1 sm:mt-0">STUDIO</span>
+                </h1>
+            </div>
+
+            <!-- Progress Bar Container -->
+            <div class="w-full bg-cyber-black h-3 rounded-full overflow-hidden border border-cyber-cyan/40 my-6 relative">
+                <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-magenta via-cyber-purple to-cyber-cyan w-0 transition-all duration-100 ease-out"></div>
+            </div>
+
+            <div class="flex justify-between items-center text-xs font-orbitron text-gray-400 mb-6">
+                <span id="loader-status" class="animate-pulse text-cyber-cyan">MEMUAT MODUL DIGITAL...</span>
+                <span id="percentage-text" class="text-cyber-magenta font-bold">0%</span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col gap-3">
+                <button id="enter-btn" class="w-full py-3.5 px-6 rounded-xl font-orbitron font-bold text-white bg-gradient-to-r from-cyber-magenta to-cyber-purple hover:from-cyber-purple hover:to-cyber-cyan transition-all transform hover:scale-105 active:scale-95 shadow-lg border border-cyber-magenta/50 cursor-pointer">
+                    <span id="enter-btn-text">[ MASUK KE STUDIO ]</span>
+                </button>
+                <button id="skip-btn" class="text-xs font-orbitron text-gray-400 hover:text-cyber-cyan transition-colors py-1 cursor-pointer">
+                    [ SKIP SEQUENCE ]
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="fixed top-0 left-0 w-full z-40 bg-cyber-black/80 backdrop-blur-lg border-b border-cyber-panel/60 px-4 md:px-8 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            
+            <!-- Text Logo -->
+            <a href="#" class="font-orbitron font-extrabold text-xl text-white tracking-wider flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-cyber-magenta inline-block animate-ping"></span>
+                KARSA <span class="text-cyber-cyan">DIGITAL</span>
+            </a>
+
+            <!-- Navigation Links -->
+            <div class="hidden md:flex items-center space-x-8 text-sm font-orbitron font-medium text-gray-300">
+                <a href="#beranda" class="hover:text-cyber-cyan transition-colors">BERANDA</a>
+                <a href="#tentang" class="hover:text-cyber-cyan transition-colors">TENTANG KAMI</a>
+                <a href="#layanan" class="hover:text-cyber-cyan transition-colors">LAYANAN</a>
+            </div>
+
+            <!-- Discord CTA Button -->
+            <a href="https://discord.com/users/1207242448212992043" target="_blank" rel="noopener noreferrer" class="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-orbitron text-xs font-bold text-white bg-cyber-dark border border-cyber-cyan/40 hover:border-cyber-cyan hover:bg-cyber-cyan/10 transition-all text-glow-cyan">
+                <i class="fa-brands fa-discord text-base text-cyber-cyan"></i>
+                <span>KONSULTASI</span>
+            </a>
+
+            <!-- Mobile Menu Toggle -->
+            <button id="menu-btn" class="md:hidden text-gray-300 hover:text-white text-xl focus:outline-none cursor-pointer">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4 px-2 space-y-3 font-orbitron text-sm border-t border-cyber-panel pt-3">
+            <a href="#beranda" class="block text-gray-300 hover:text-cyber-cyan">BERANDA</a>
+            <a href="#tentang" class="block text-gray-300 hover:text-cyber-cyan">TENTANG KAMI</a>
+            <a href="#layanan" class="block text-gray-300 hover:text-cyber-cyan">LAYANAN</a>
+            <a href="https://discord.com/users/1207242448212992043" target="_blank" rel="noopener noreferrer" class="block text-cyber-cyan font-bold">KONSULTASI DISCORD</a>
+        </div>
+    </nav>
+
+    <section id="beranda" class="relative min-h-screen pt-28 pb-16 flex items-center justify-center overflow-hidden city-bg">
+        
+        <!-- Cyberpunk City Skyline Graphic SVG Background -->
+        <div class="absolute bottom-0 inset-x-0 h-96 pointer-events-none opacity-40 z-0 flex items-end justify-center overflow-hidden">
+            <svg class="w-full h-full min-w-[800px]" viewBox="0 0 1200 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0,400 L0,280 L40,280 L40,220 L70,220 L70,280 L110,280 L110,180 L160,180 L160,320 L200,320 L200,150 L250,150 L250,100 L270,100 L270,150 L310,150 L310,300 L360,300 L360,200 L420,200 L420,120 L480,120 L480,260 L540,260 L540,80 L560,80 L560,50 L580,50 L580,80 L620,80 L620,240 L680,240 L680,160 L730,160 L730,310 L780,310 L780,140 L840,140 L840,220 L900,220 L900,110 L960,110 L960,290 L1020,290 L1020,190 L1080,190 L1080,270 L1140,270 L1140,210 L1200,210 L1200,400 Z" fill="#12121a" stroke="#00f2fe" stroke-width="0.5"/>
+                <circle cx="230" cy="180" r="3" fill="#ff0055" class="animate-ping" style="animation-duration: 2s;"/>
+                <circle cx="560" cy="100" r="4" fill="#00f2fe" class="animate-ping" style="animation-duration: 3s;"/>
+                <circle cx="870" cy="160" r="3" fill="#ff6b00" class="animate-ping" style="animation-duration: 2.5s;"/>
+                <polygon points="260,100 150,0 200,0" fill="rgba(0,242,254,0.15)" />
+                <polygon points="570,50 680,0 750,0" fill="rgba(255,0,85,0.15)" />
+            </svg>
+        </div>
+
+        <div class="max-w-4xl mx-auto px-4 z-10 text-center">
+            
+            <!-- Slide-Out Animated Headline Group -->
+            <div class="animate-slide-right opacity-0">
+                <h1 class="text-3xl sm:text-5xl md:text-6xl font-black font-orbitron text-white uppercase tracking-tight leading-tight">
+                    Selamat datang di <br class="hidden sm:inline"/>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyber-cyan via-purple-400 to-cyber-magenta text-glow-cyan">
+                        Karsa Digital Studio
+                    </span>
+                </h1>
+            </div>
+
+            <!-- Slide-Out Animated Description -->
+            <div class="animate-slide-right delay-1 opacity-0 mt-6 max-w-2xl mx-auto">
+                <p class="text-base sm:text-lg text-gray-300 font-sans leading-relaxed">
+                    Kami memadukan keahlian desain futuristik, pengembangan web performa tinggi, dan pengalaman digital interaktif untuk merealisasikan visi Anda.
+                </p>
+            </div>
+
+            <!-- Sub-role Badge -->
+            <div class="animate-slide-right delay-2 opacity-0 mt-5">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyber-panel/80 border border-cyber-cyan/30 text-cyber-cyan font-orbitron text-xs sm:text-sm">
+                    <span class="w-2 h-2 rounded-full bg-cyber-cyan animate-pulse"></span>
+                    <span>CREATIVE WEB & DIGITAL ARCHITECTURE</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="animate-slide-right delay-3 opacity-0 mt-8 flex flex-wrap justify-center items-center gap-4">
+                <a href="https://discord.com/users/1207242448212992043" target="_blank" rel="noopener noreferrer" class="px-8 py-4 rounded-xl font-orbitron font-bold text-sm text-white bg-gradient-to-r from-cyber-magenta to-cyber-purple hover:from-cyber-purple hover:to-cyber-cyan transition-all transform hover:scale-105 active:scale-95 shadow-lg neon-border-magenta flex items-center gap-2">
+                    <i class="fa-brands fa-discord text-lg"></i>
+                    <span>NGOBROL SEKARANG</span>
+                </a>
+            </div>
+
+            <!-- Active Status Badge -->
+            <div class="mt-10 flex items-center justify-center gap-3 text-xs font-orbitron text-gray-400">
+                <span class="flex h-3 w-3 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span>STATUS SYSTEM: Menerima Proyek Baru</span>
+            </div>
+
+        </div>
+    </section>
+
+    <section id="tentang" class="py-20 px-4 bg-cyber-dark/60 border-t border-b border-cyber-panel/50 relative">
+        <div class="max-w-6xl mx-auto">
+            
+            <div class="text-center mb-16">
+                <p class="text-xs font-orbitron text-cyber-cyan tracking-widest uppercase mb-2">// KINERJA & DEDIKASI</p>
+                <h2 class="text-3xl sm:text-4xl font-black font-orbitron text-white">
+                    Memberikan Pelayanan <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyber-magenta to-cyber-cyan">Berkelas Tinggi</span>
+                </h2>
+                <div class="w-24 h-1 bg-gradient-to-r from-cyber-magenta to-cyber-cyan mx-auto mt-4 rounded-full"></div>
+            </div>
+
+            <!-- Grid Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <div class="bg-cyber-panel/60 p-8 rounded-2xl border border-cyber-panel hover:border-cyber-cyan/50 transition-all group hover:-translate-y-2 relative overflow-hidden">
+                    <div class="w-14 h-14 rounded-xl bg-cyber-cyan/10 border border-cyber-cyan/30 flex items-center justify-center text-cyber-cyan text-2xl mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <h3 class="text-xl font-orbitron font-bold text-white mb-3">Desain Tanpa Batas</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">
+                        Kami menciptakan antarmuka yang memikat secara visual, mengedepankan identitas unik bisnis Anda dengan estetika modern.
+                    </p>
+                </div>
+
+                <div class="bg-cyber-panel/60 p-8 rounded-2xl border border-cyber-panel hover:border-cyber-magenta/50 transition-all group hover:-translate-y-2 relative overflow-hidden">
+                    <div class="w-14 h-14 rounded-xl bg-cyber-magenta/10 border border-cyber-magenta/30 flex items-center justify-center text-cyber-magenta text-2xl mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <h3 class="text-xl font-orbitron font-bold text-white mb-3">Kecepatan & Performa</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">
+                        Kode yang dioptimalkan untuk memastikan situs Anda cepat dimuat di semua perangkat tanpa mengorbankan kualitas animasi.
+                    </p>
+                </div>
+
+                <div class="bg-cyber-panel/60 p-8 rounded-2xl border border-cyber-panel hover:border-cyber-purple/50 transition-all group hover:-translate-y-2 relative overflow-hidden">
+                    <div class="w-14 h-14 rounded-xl bg-cyber-purple/10 border border-cyber-purple/30 flex items-center justify-center text-cyber-purple text-2xl mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-headset"></i>
+                    </div>
+                    <h3 class="text-xl font-orbitron font-bold text-white mb-3">Dukungan Responsif</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">
+                        Komunikasi transparan dan bantuan teknis berkelanjutan melalui saluran Discord profesional untuk kenyamanan Anda.
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- Radar Banner Matrix -->
+            <div class="mt-16 bg-cyber-black p-6 sm:p-10 rounded-2xl border border-cyber-panel flex flex-col md:flex-row items-center justify-between gap-8">
+                <div class="flex items-center gap-6">
+                    <div class="relative w-20 h-20 rounded-full border border-cyber-cyan/40 flex items-center justify-center flex-shrink-0">
+                        <div class="absolute inset-0 rounded-full border-t-2 border-cyber-cyan animate-radar"></div>
+                        <i class="fa-solid fa-microchip text-cyber-cyan text-2xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-orbitron font-bold text-white">Muhamad Maulana Ariel</h4>
+                        <p class="text-xs font-orbitron text-cyber-magenta mt-1">FOUNDER & LEAD DEVELOPER</p>
+                        <p class="text-xs text-gray-400 mt-2">Karsa Digital Studio • Cyberpunk Creative Hub</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 w-full md:w-auto text-center border-t md:border-t-0 md:border-l border-cyber-panel pt-6 md:pt-0 md:pl-8">
+                    <div>
+                        <p class="text-2xl font-orbitron font-extrabold text-cyber-cyan">100%</p>
+                        <p class="text-[10px] font-orbitron text-gray-400">RESPONSIVE</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-orbitron font-extrabold text-cyber-magenta">50+</p>
+                        <p class="text-[10px] font-orbitron text-gray-400">PROYEK</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-orbitron font-extrabold text-cyber-purple">24/7</p>
+                        <p class="text-[10px] font-orbitron text-gray-400">SUPPORT</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-orbitron font-extrabold text-amber-400">4.9★</p>
+                        <p class="text-[10px] font-orbitron text-gray-400">RATING</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section id="layanan" class="py-20 px-4 max-w-6xl mx-auto">
+        <div class="text-center mb-16">
+            <p class="text-xs font-orbitron text-cyber-magenta tracking-widest uppercase mb-2">// KEMAMPUAN UTAMA</p>
+            <h2 class="text-3xl sm:text-4xl font-black font-orbitron text-white">Layanan Spesialis</h2>
+            <div class="w-24 h-1 bg-gradient-to-r from-cyber-cyan to-cyber-magenta mx-auto mt-4 rounded-full"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Design Service -->
+            <div class="bg-cyber-dark p-6 rounded-2xl border border-cyber-panel hover:border-cyber-cyan transition-all group">
+                <div class="w-12 h-12 rounded-xl bg-cyber-cyan/10 border border-cyber-cyan/30 flex items-center justify-center text-cyber-cyan text-2xl mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-palette"></i>
+                </div>
+                <h3 class="text-lg font-orbitron font-bold text-white mb-2">Design</h3>
+                <p class="text-xs text-gray-400 leading-relaxed">Pembuatan desain 3D SketchUp profesional serta perancangan poster kustom untuk berbagai kebutuhan acara, branding, dan promosi.</p>
+            </div>
+
+            <!-- Konsultasi Service -->
+            <div class="bg-cyber-dark p-6 rounded-2xl border border-cyber-panel hover:border-cyber-magenta transition-all group">
+                <div class="w-12 h-12 rounded-xl bg-cyber-magenta/10 border border-cyber-magenta/30 flex items-center justify-center text-cyber-magenta text-2xl mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <h3 class="text-lg font-orbitron font-bold text-white mb-2">Konsultasi</h3>
+                <p class="text-xs text-gray-400 leading-relaxed">Sesi diskusi dan pendampingan profesional di bidang konsultasi psikologi, akuntansi, serta topik seputar psikologi dan ekonomi.</p>
+            </div>
+
+            <!-- Jasa Service -->
+            <div class="bg-cyber-dark p-6 rounded-2xl border border-cyber-panel hover:border-cyber-purple transition-all group">
+                <div class="w-12 h-12 rounded-xl bg-cyber-purple/10 border border-cyber-purple/30 flex items-center justify-center text-cyber-purple text-2xl mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <h3 class="text-lg font-orbitron font-bold text-white mb-2">Jasa</h3>
+                <p class="text-xs text-gray-400 leading-relaxed">Layanan bimbingan & penyusunan skripsi serta pengerjaan website portofolio interaktif dan responsif yang siap pakai.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="kontak" class="py-12 px-4 max-w-6xl mx-auto">
+        <div class="relative bg-cyber-dark/80 p-8 sm:p-12 rounded-2xl border-2 border-cyber-cyan/50 neon-border-cyan backdrop-blur-md overflow-hidden text-center">
+            
+            <!-- Corner Accent Decals -->
+            <div class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-cyber-magenta"></div>
+            <div class="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-cyber-magenta"></div>
+            <div class="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-cyber-magenta"></div>
+            <div class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-cyber-magenta"></div>
+
+            <p class="text-xs font-orbitron text-cyber-magenta tracking-widest uppercase mb-2">// CONNECT WITH US</p>
+            
+            <h2 class="text-3xl sm:text-5xl font-black font-orbitron text-white tracking-wider mb-4 text-glow-cyan">
+                GET IN TOUCH
+            </h2>
+            
+            <p class="text-sm text-gray-300 max-w-xl mx-auto mb-6 font-sans leading-relaxed">
+                Punya ide proyek atau ingin berkonsultasi mengenai kebutuhan situs Anda? Hubungi kami langsung melalui Discord untuk respon cepat.
+            </p>
+
+            <!-- Contact Information Grid (Address & Email) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mb-8 text-left font-orbitron">
+                <div class="bg-cyber-panel/80 p-4 rounded-xl border border-cyber-cyan/30 flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-lg bg-cyber-cyan/10 border border-cyber-cyan/40 flex items-center justify-center text-cyber-cyan text-lg flex-shrink-0">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest">Alamat Studio</p>
+                        <p class="text-xs font-semibold text-white mt-0.5">Jalan Candi lempung 46B - 8, Surabaya, Indonesia</p>
+                    </div>
+                </div>
+
+                <a href="mailto:muhammadmaulanaariel22@gmail.com" class="bg-cyber-panel/80 p-4 rounded-xl border border-cyber-magenta/30 flex items-center gap-4 hover:border-cyber-magenta transition-colors group cursor-pointer">
+                    <div class="w-10 h-10 rounded-lg bg-cyber-magenta/10 border border-cyber-magenta/40 flex items-center justify-center text-cyber-magenta text-lg flex-shrink-0 group-hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-envelope"></i>
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest">Email Resmi</p>
+                        <p class="text-xs font-semibold text-white mt-0.5 truncate hover:text-cyber-magenta transition-colors">muhammadmaulanaariel22@gmail.com</p>
+                    </div>
+                </a>
+            </div>
+
+            <a href="https://discord.com/users/1207242448212992043" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-3 px-8 py-4 rounded-xl font-orbitron font-bold text-sm text-white bg-gradient-to-r from-cyber-cyan via-cyber-purple to-cyber-magenta hover:from-cyber-magenta hover:to-cyber-cyan transition-all transform hover:scale-105 active:scale-95 shadow-lg border border-cyber-cyan/50">
+                <i class="fa-brands fa-discord text-xl"></i>
+                <span>HUBUNGI VIA DISCORD</span>
+            </a>
+        </div>
+    </section>
+
+    <footer class="py-10 px-4 border-t border-cyber-panel/60 bg-cyber-black text-xs text-gray-500 font-orbitron">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
+            <p>© 2026 KARSA DIGITAL STUDIO. ALL RIGHTS RESERVED.</p>
+            <div class="flex items-center gap-6">
+                <a href="https://discord.com/users/1207242448212992043" target="_blank" class="hover:text-cyber-cyan transition-colors">DISCORD</a>
+                <a href="mailto:muhammadmaulanaariel22@gmail.com" class="hover:text-cyber-cyan transition-colors">EMAIL</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Complete JavaScript Execution Block -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            // Audio System Setup - Black Catcher (Vickeblanka)
+            let bgAudio = new Audio('https://ia801503.us.archive.org/15/items/black-clover-ost-black-catcher/black-catcher.mp3');
+            bgAudio.loop = true;
+
+            // Elements
+            const loaderScreen = document.getElementById('loader-screen');
+            const progressBar = document.getElementById('progress-bar');
+            const percentageText = document.getElementById('percentage-text');
+            const enterBtn = document.getElementById('enter-btn');
+            const skipBtn = document.getElementById('skip-btn');
+            const menuBtn = document.getElementById('menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            let progress = 0;
+            let loaderInterval;
+
+            // Function to play audio from hook/reff section with 1 second delay
+            function playReffAudio() {
+                setTimeout(() => {
+                    bgAudio.currentTime = 50; // Start at ~0:50 (reff section)
+                    bgAudio.play().catch(err => {
+                        console.log("Audio playback waiting for user interaction:", err);
+                    });
+                }, 1000); // 1 second delay
+            }
+
+            // Function to close loader
+            function dismissLoader() {
+                if (loaderInterval) clearInterval(loaderInterval);
+                playReffAudio();
+                if (loaderScreen) {
+                    loaderScreen.classList.add('fade-out');
+                    setTimeout(() => {
+                        loaderScreen.style.display = 'none';
+                    }, 600);
+                }
+            }
+
+            // Progress bar simulation
+            loaderInterval = setInterval(() => {
+                if (progress < 100) {
+                    progress += Math.floor(Math.random() * 8) + 4;
+                    if (progress > 100) progress = 100;
+                    
+                    if (progressBar) progressBar.style.width = progress + '%';
+                    if (percentageText) percentageText.innerText = progress + '%';
+                } else {
+                    clearInterval(loaderInterval);
+                }
+            }, 120);
+
+            // Button Event Listeners
+            if (enterBtn) {
+                enterBtn.addEventListener('click', dismissLoader);
+            }
+
+            if (skipBtn) {
+                skipBtn.addEventListener('click', dismissLoader);
+            }
+
+            // Mobile menu toggle
+            if (menuBtn && mobileMenu) {
+                menuBtn.addEventListener('click', function () {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
